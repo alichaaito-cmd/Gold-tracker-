@@ -6,6 +6,7 @@ It uses the public Gold API endpoint:
 https://api.gold-api.com/price/XAU
 
 Features:
+- Enter gold purchases directly in kilograms, grams, or troy ounces (oz)
 - Live indicative gold spot in USD/troy ounce
 - Unlimited purchase lots
 - kg / grams / troy ounces
@@ -13,7 +14,7 @@ Features:
 - Purchase spot price and optional fees
 - Per-lot value, P/L, P/L %, fine ounces and break-even
 - Portfolio totals
-- Automatic refresh about every 60 seconds while open
+- Automatic refresh about every 5 seconds while open
 - Backup / restore
 - Installable on iPhone Home Screen after hosting over HTTPS
 

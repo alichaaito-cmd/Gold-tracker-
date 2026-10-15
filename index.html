@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Gold Tracker">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
   <title>Gold Lot Tracker</title>
   <style>
     :root{
@@ -122,7 +122,7 @@
   <div id="lots" class="lots"></div>
 
   <div class="footer">
-    Spot price is an indicative USD/troy-ounce market price. Your actual dealer resale price may differ because of spread, assay, fees, storage, taxes or local market conditions.
+    Spot price is an indicative USD per troy ounce market price. Your actual dealer resale price may differ because of spread, assay, fees, storage, taxes or local market conditions.
   </div>
 </div>
 
@@ -143,8 +143,11 @@
         <select id="unit">
           <option value="kg">Kilograms</option>
           <option value="g">Grams</option>
-          <option value="oz">Troy ounces</option>
+          <option value="oz">Troy ounces (oz)</option>
         </select>
+      </div>
+      <div class="full" style="margin-top:-4px">
+        <div class="note">For gold, “oz” means troy ounces. 1 kg = 32.1507466 troy oz.</div>
       </div>
       <div>
         <label for="purity">Purity</label>
@@ -353,7 +356,7 @@
   if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
   render();
   refreshSpot();
-  setInterval(()=>{ if(document.visibilityState==='visible') refreshSpot(); },60000);
+  setInterval(()=>{ if(document.visibilityState==='visible') refreshSpot(); },5000);
   document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') refreshSpot(); });
 })();
 </script>
