@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0b0c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Gold Tracker">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <title>Gold Lot Tracker</title>
+  <style>
+    :root{
+      --bg:#0b0b0c; --card:#151517; --card2:#1d1d20; --text:#f6f6f7; --muted:#9b9ba3;
+      --line:#2c2c31; --gold:#d8b04c; --green:#4ed17a; --red:#ff6b6b;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}
+    body{min-height:100vh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+    .wrap{max-width:720px;margin:0 auto;padding:18px 16px 42px}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .brand h1{font-size:24px;margin:0;font-weight:750;letter-spacing:-.02em}
+    .brand p{margin:4px 0 0;color:var(--muted);font-size:13px}
+    button{appearance:none;border:0;border-radius:14px;padding:12px 14px;font-size:15px;font-weight:650;background:var(--card2);color:var(--text)}
+    button:active{transform:scale(.98)}
+    .primary{background:var(--gold);color:#111}
+    .danger{background:#2b1717;color:#ff9999}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px}
+    .metric .label{color:var(--muted);font-size:12px;margin-bottom:7px}
+    .metric .value{font-size:22px;font-weight:750;letter-spacing:-.025em}
+    .metric .sub{font-size:12px;color:var(--muted);margin-top:5px}
+    .spot{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .spotprice{font-size:32px;font-weight:800;letter-spacing:-.04em}
+    .updated{font-size:12px;color:var(--muted);text-align:right;max-width:180px}
+    .sectionhead{display:flex;justify-content:space-between;align-items:center;margin:22px 2px 10px}
+    .sectionhead h2{font-size:18px;margin:0}
+    .lots{display:flex;flex-direction:column;gap:10px}
+    .lot{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px}
+    .lotrow{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+    .lotname{font-weight:750}
+    .lotmeta{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.45}
+    .lotpl{text-align:right;font-weight:800}
+    .positive{color:var(--green)} .negative{color:var(--red)}
+    .lotstats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+    .tiny{background:var(--card2);border-radius:12px;padding:9px 10px}
+    .tiny span{display:block;color:var(--muted);font-size:10px;margin-bottom:3px}
+    .tiny b{font-size:13px}
+    .empty{text-align:center;color:var(--muted);padding:28px 14px;border:1px dashed var(--line);border-radius:18px}
+    dialog{border:0;border-radius:22px;background:var(--card);color:var(--text);width:min(94vw,560px);padding:0}
+    dialog::backdrop{background:rgba(0,0,0,.72)}
+    .modal{padding:18px}
+    .modal h3{margin:0 0 14px;font-size:20px}
+    .formgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+    input,select{width:100%;border:1px solid var(--line);background:#0f0f11;color:var(--text);border-radius:12px;padding:12px;font-size:16px}
+    .full{grid-column:1/-1}
+    .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+    .note{font-size:12px;color:var(--muted);line-height:1.45;margin-top:12px}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+    .pill{font-size:12px;padding:9px 11px}
+    .footer{color:var(--muted);font-size:11px;line-height:1.5;margin-top:22px}
+    @media(max-width:460px){
+      .metric .value{font-size:19px}
+      .spotprice{font-size:28px}
+      .formgrid{grid-template-columns:1fr}
+      .full{grid-column:auto}
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">
+      <h1>Gold Lot Tracker</h1>
+      <p>Physical gold portfolio · live XAU/USD</p>
+    </div>
+    <button id="refreshBtn" aria-label="Refresh price">↻</button>
+  </div>
+
+  <div class="grid">
+    <div class="card spot">
+      <div>
+        <div class="label" style="color:var(--muted);font-size:12px">LIVE GOLD SPOT</div>
+        <div id="spotPrice" class="spotprice">Loading…</div>
+      </div>
+      <div class="updated" id="updated">Connecting…</div>
+    </div>
+
+    <div class="card metric">
+      <div class="label">TOTAL GOLD</div>
+      <div id="totalKg" class="value">0.000 kg</div>
+      <div id="totalOz" class="sub">0.000 oz fine</div>
+    </div>
+    <div class="card metric">
+      <div class="label">INVESTED</div>
+      <div id="invested" class="value">$0</div>
+      <div class="sub">Cost basis incl. fees</div>
+    </div>
+    <div class="card metric">
+      <div class="label">CURRENT VALUE</div>
+      <div id="currentValue" class="value">$0</div>
+      <div class="sub">Based on spot</div>
+    </div>
+    <div class="card metric">
+      <div class="label">TOTAL P/L</div>
+      <div id="totalPL" class="value">$0</div>
+      <div id="totalPLPct" class="sub">0.00%</div>
+    </div>
+  </div>
+
+  <div class="sectionhead">
+    <h2>Your lots</h2>
+    <div class="toolbar">
+      <button id="exportBtn" class="pill">Backup</button>
+      <button id="importBtn" class="pill">Restore</button>
+      <button id="addBtn" class="primary pill">+ Add lot</button>
+    </div>
+  </div>
+
+  <div id="lots" class="lots"></div>
+
+  <div class="footer">
+    Spot price is an indicative USD/troy-ounce market price. Your actual dealer resale price may differ because of spread, assay, fees, storage, taxes or local market conditions.
+  </div>
+</div>
+
+<dialog id="lotDialog">
+  <form method="dialog" id="lotForm" class="modal">
+    <h3>Add gold lot</h3>
+    <div class="formgrid">
+      <div class="full">
+        <label for="lotName">Lot name</label>
+        <input id="lotName" placeholder="e.g. 2 kg bar" required>
+      </div>
+      <div>
+        <label for="weight">Weight</label>
+        <input id="weight" type="number" min="0.0001" step="any" placeholder="2" required>
+      </div>
+      <div>
+        <label for="unit">Unit</label>
+        <select id="unit">
+          <option value="kg">Kilograms</option>
+          <option value="g">Grams</option>
+          <option value="oz">Troy ounces</option>
+        </select>
+      </div>
+      <div>
+        <label for="purity">Purity</label>
+        <select id="purity">
+          <option value="0.9999">999.9</option>
+          <option value="0.999">999</option>
+          <option value="0.995">995</option>
+          <option value="0.916">916</option>
+          <option value="0.750">750</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+      <div>
+        <label for="customPurity">Custom purity (0–1)</label>
+        <input id="customPurity" type="number" min="0.001" max="1" step="0.0001" placeholder="0.9999" disabled>
+      </div>
+      <div>
+        <label for="buyPrice">Purchase gold price ($/oz)</label>
+        <input id="buyPrice" type="number" min="0.01" step="any" placeholder="4100" required>
+      </div>
+      <div>
+        <label for="fees">Premium / fees ($)</label>
+        <input id="fees" type="number" min="0" step="any" value="0">
+      </div>
+      <div class="full">
+        <label for="date">Purchase date</label>
+        <input id="date" type="date">
+      </div>
+    </div>
+    <div id="formError" class="note" style="color:#ff9999"></div>
+    <div class="actions">
+      <button type="button" id="cancelLot">Cancel</button>
+      <button type="submit" class="primary">Save lot</button>
+    </div>
+  </form>
+</dialog>
+
+<input id="fileInput" type="file" accept="application/json" hidden>
+
+<script>
+(() => {
+  const OZ_PER_KG = 32.1507465686;
+  const STORAGE_LOTS = 'goldLotTracker.lots.v2';
+  const STORAGE_PRICE = 'goldLotTracker.lastPrice.v2';
+  let lots = JSON.parse(localStorage.getItem(STORAGE_LOTS) || '[]');
+  const savedPrice = JSON.parse(localStorage.getItem(STORAGE_PRICE) || 'null');
+  let spot = savedPrice?.price || 0;
+  let lastUpdated = savedPrice?.updated ? new Date(savedPrice.updated) : null;
+
+  const $ = id => document.getElementById(id);
+  const money = (n,d=0) => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:d,maximumFractionDigits:d}).format(Number.isFinite(n)?n:0);
+  const num = (n,d=3) => new Intl.NumberFormat('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}).format(Number.isFinite(n)?n:0);
+
+  function fineOz(lot){
+    const w = Number(lot.weight);
+    const grossOz = lot.unit === 'kg' ? w * OZ_PER_KG : lot.unit === 'g' ? (w/1000) * OZ_PER_KG : w;
+    return grossOz * Number(lot.purity);
+  }
+  function grossKg(lot){
+    const w = Number(lot.weight);
+    return lot.unit === 'kg' ? w : lot.unit === 'g' ? w/1000 : w/OZ_PER_KG;
+  }
+  function cost(lot){ return fineOz(lot) * Number(lot.buyPrice) + Number(lot.fees || 0); }
+  function current(lot){ return fineOz(lot) * spot; }
+  function escapeHTML(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+  function saveLots(){ localStorage.setItem(STORAGE_LOTS, JSON.stringify(lots)); }
+
+  function render(){
+    $('spotPrice').textContent = spot > 0 ? money(spot,2) + ' / oz' : 'Unavailable';
+    $('updated').textContent = lastUpdated ? 'Updated ' + lastUpdated.toLocaleString([], {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short'}) : 'No live price yet';
+
+    const totalKg = lots.reduce((s,l)=>s+grossKg(l),0);
+    const totalFineOz = lots.reduce((s,l)=>s+fineOz(l),0);
+    const invested = lots.reduce((s,l)=>s+cost(l),0);
+    const value = spot > 0 ? totalFineOz * spot : 0;
+    const pl = value - invested;
+    const pct = invested > 0 ? (pl/invested)*100 : 0;
+
+    $('totalKg').textContent = num(totalKg,3) + ' kg';
+    $('totalOz').textContent = num(totalFineOz,3) + ' oz fine';
+    $('invested').textContent = money(invested,0);
+    $('currentValue').textContent = spot > 0 ? money(value,0) : '—';
+    $('totalPL').textContent = spot > 0 ? (pl>=0?'+':'') + money(pl,0) : '—';
+    $('totalPL').className = 'value ' + (spot>0 ? (pl>=0?'positive':'negative') : '');
+    $('totalPLPct').textContent = spot > 0 ? (pct>=0?'+':'') + pct.toFixed(2) + '%' : 'Waiting for price';
+
+    const box = $('lots');
+    box.innerHTML = '';
+    if(!lots.length){
+      box.innerHTML = '<div class="empty">No lots yet. Tap <b>+ Add lot</b> to enter your first gold purchase.</div>';
+      return;
+    }
+    lots.forEach((lot,index)=>{
+      const fo=fineOz(lot), c=cost(lot), v=current(lot), p=v-c, pp=c>0?(p/c)*100:0;
+      const purityLabel = lot.purity===0.9999 ? '999.9' : Math.round(lot.purity*1000).toString();
+      const el=document.createElement('div');
+      el.className='lot';
+      el.innerHTML=`
+        <div class="lotrow">
+          <div>
+            <div class="lotname">${escapeHTML(lot.name)}</div>
+            <div class="lotmeta">${lot.weight} ${lot.unit} · ${purityLabel} · entry ${money(lot.buyPrice,2)}/oz${lot.date?' · '+lot.date:''}</div>
+          </div>
+          <div>
+            <div class="lotpl ${spot>0?(p>=0?'positive':'negative'):''}">${spot>0?((p>=0?'+':'')+money(p,0)):'—'}</div>
+            <div class="lotmeta" style="text-align:right">${spot>0?((pp>=0?'+':'')+pp.toFixed(2)+'%'):'Waiting'}</div>
+          </div>
+        </div>
+        <div class="lotstats">
+          <div class="tiny"><span>Fine gold</span><b>${num(fo,4)} oz</b></div>
+          <div class="tiny"><span>Cost basis</span><b>${money(c,0)}</b></div>
+          <div class="tiny"><span>Current value</span><b>${spot>0?money(v,0):'—'}</b></div>
+          <div class="tiny"><span>Break-even spot</span><b>${money(c/fo,2)}/oz</b></div>
+        </div>
+        <div class="actions" style="margin-top:10px">
+          <button type="button" class="danger pill" data-delete="${index}">Delete</button>
+        </div>`;
+      box.appendChild(el);
+    });
+    box.querySelectorAll('[data-delete]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        if(confirm('Delete this lot?')){
+          lots.splice(Number(btn.dataset.delete),1);
+          saveLots(); render();
+        }
+      });
+    });
+  }
+
+  async function refreshSpot(){
+    $('refreshBtn').disabled=true;
+    $('updated').textContent='Updating…';
+    try{
+      const r=await fetch('https://api.gold-api.com/price/XAU',{cache:'no-store'});
+      if(!r.ok) throw new Error('Price request failed');
+      const data=await r.json();
+      const p=Number(data.price);
+      if(!Number.isFinite(p) || p<=0) throw new Error('Invalid price');
+      spot=p;
+      lastUpdated=data.updatedAt ? new Date(data.updatedAt) : new Date();
+      localStorage.setItem(STORAGE_PRICE, JSON.stringify({price:spot,updated:lastUpdated.toISOString()}));
+    }catch(e){
+      // Keep the last successful price so the app remains useful offline.
+      if(!spot) alert('Could not load the live gold price. Check your internet connection and try again.');
+    }finally{
+      $('refreshBtn').disabled=false;
+      render();
+    }
+  }
+
+  $('addBtn').addEventListener('click',()=>{
+    $('lotForm').reset();
+    $('fees').value='0';
+    $('customPurity').disabled=true;
+    $('formError').textContent='';
+    $('lotDialog').showModal();
+  });
+  $('cancelLot').addEventListener('click',()=> $('lotDialog').close());
+  $('purity').addEventListener('change',()=> $('customPurity').disabled = $('purity').value!=='custom');
+  $('lotForm').addEventListener('submit',(e)=>{
+    e.preventDefault();
+    const purity = $('purity').value==='custom' ? Number($('customPurity').value) : Number($('purity').value);
+    const lot={
+      name:$('lotName').value.trim(),
+      weight:Number($('weight').value),
+      unit:$('unit').value,
+      purity,
+      buyPrice:Number($('buyPrice').value),
+      fees:Number($('fees').value||0),
+      date:$('date').value
+    };
+    if(!lot.name || !(lot.weight>0) || !(lot.purity>0&&lot.purity<=1) || !(lot.buyPrice>0) || lot.fees<0){
+      $('formError').textContent='Please check the lot details.';
+      return;
+    }
+    lots.unshift(lot);
+    saveLots();
+    $('lotDialog').close();
+    render();
+  });
+
+  $('refreshBtn').addEventListener('click',refreshSpot);
+
+  $('exportBtn').addEventListener('click',()=>{
+    const payload={version:2,exportedAt:new Date().toISOString(),lots};
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='gold-lots-backup.json';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  });
+  $('importBtn').addEventListener('click',()=> $('fileInput').click());
+  $('fileInput').addEventListener('change',async(e)=>{
+    const file=e.target.files[0]; if(!file) return;
+    try{
+      const data=JSON.parse(await file.text());
+      if(!Array.isArray(data.lots)) throw new Error();
+      if(confirm('Replace your current lots with this backup?')){
+        lots=data.lots; saveLots(); render();
+      }
+    }catch{ alert('That file is not a valid Gold Lot Tracker backup.'); }
+    e.target.value='';
+  });
+
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  render();
+  refreshSpot();
+  setInterval(()=>{ if(document.visibilityState==='visible') refreshSpot(); },60000);
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') refreshSpot(); });
+})();
+</script>
+</body>
+</html>
